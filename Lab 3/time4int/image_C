@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <stdint.h>
+
+char *bmp_to_C(char *filename) {
+    FILE *fp;
+    uint8_t buf[16];
+    static char array[100];
+    int len = strlen(filename);
+    long sz;
+
+    strcpy(array, filename);
+    fp = fopen(filename, "rb");
+    if (fp == NULL)
+        return NULL;
+
+    fseek(fp, 0, SEEK_END);
+    sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    array[len - 4] = '_';
+    printf("const unsigned char PROGMEM %s[%ld] = {\n", array, sz);
+    do {
+        int n = fread(buf, 1, 16, fp);
+        for (int i = 0; i < n; i++) {
+            printf("0x%02X,", buf[i]);
+        }
+        printf("\n");
+    } while (n > 0);
+    printf("};\n");
+
+    fclose(fp);
+    return array;
+}
+
+int main(int argc, char **argv) {
+    while (--argc) {
+        bmp_to_C(*++argv);
+    }
+    return 0;
+}
